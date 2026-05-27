@@ -249,7 +249,7 @@ const BULLET_SIZE = 6;
 const PLAYER_SPEED = 2.5;
 const ENEMY_SPEED = 1.2;
 const BULLET_SPEED = 5;
-const PLAYER_FIRE_CD = 350;
+const PLAYER_FIRE_CD = 25; // frames (~0.42s at 60fps)
 const ENEMY_FIRE_CD_MIN = 800;
 const ENEMY_FIRE_CD_MAX = 2500;
 const MAX_ENEMIES_ON_SCREEN = 4;
@@ -506,7 +506,7 @@ function tankShoot(tank) {
     size: BULLET_SIZE,
   };
 
-  tank.cooldown = tank.isPlayer ? PLAYER_FIRE_CD : 300;
+  tank.cooldown = tank.isPlayer ? PLAYER_FIRE_CD : 30;
   return bullet;
 }
 
@@ -759,23 +759,17 @@ function destroyPlayer() {
 }
 
 function respawnPlayer() {
-  const px = 11 * TILE;
-  const py = 23 * TILE;
-  if (isValidTankPos(px, py, null)) {
-    game.player = createTank(px, py, DIR.UP, true);
-    game.player.spawnInvincible = 90;
-  } else {
-    // Try nearby positions
-    const attempts = [
-      [11, 23], [12, 23], [10, 23],
-      [11, 22], [12, 22]
-    ];
-    for (const [c, r] of attempts) {
-      if (isValidTankPos(c * TILE, r * TILE, null)) {
-        game.player = createTank(c * TILE, r * TILE, DIR.UP, true);
-        game.player.spawnInvincible = 90;
-        break;
-      }
+  // Spawn at bottom-left area, away from base (base is at cols 12-13)
+  const positions = [
+    [4, 24], [5, 24], [3, 24],
+    [4, 23], [5, 23], [3, 23]
+  ];
+  for (const [c, r] of positions) {
+    if (isValidTankPos(c * TILE, r * TILE, null)) {
+      game.player = createTank(c * TILE, r * TILE, DIR.UP, true);
+      game.player.spawnInvincible = 90;
+      updateUI();
+      return;
     }
   }
   updateUI();

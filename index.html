@@ -445,7 +445,6 @@ function tankCanMove(tank, dx, dy) {
 
 function moveTank(tank, dx, dy) {
   if (dx === 0 && dy === 0) return false;
-  if (tank.spawnInvincible > 0) tank.spawnInvincible--;
 
   const nx = tank.x + dx;
   const ny = tank.y + dy;
@@ -1002,8 +1001,9 @@ function drawMap() {
 function drawTank(tank) {
   if (!tank || !tank.alive) return;
 
-  // Spawn protection flicker
-  if (tank.spawnInvincible > 0 && Math.floor(tank.spawnInvincible / 4) % 2 === 0) return;
+  // Spawn protection: draw semi-transparent and flicker
+  const invincible = tank.spawnInvincible > 0;
+  if (invincible && Math.floor(tank.spawnInvincible / 3) % 2 === 0) return;
 
   const x = tank.x;
   const y = tank.y;
@@ -1071,11 +1071,14 @@ function drawTank(tank) {
 
   // Spawn protection circle
   if (tank.spawnInvincible > 0) {
-    ctx.strokeStyle = 'rgba(255,255,255,' + (0.3 + 0.3 * Math.sin(tank.spawnInvincible * 0.3)) + ')';
-    ctx.lineWidth = 2;
+    const pulse = 0.4 + 0.4 * Math.sin(tank.spawnInvincible * 0.4);
+    ctx.strokeStyle = `rgba(255,255,100,${pulse})`;
+    ctx.lineWidth = 3;
+    ctx.setLineDash([4, 4]);
     ctx.beginPath();
-    ctx.arc(cx, cy, s/2 + 2, 0, Math.PI * 2);
+    ctx.arc(cx, cy, s/2 + 3, 0, Math.PI * 2);
     ctx.stroke();
+    ctx.setLineDash([]);
   }
 }
 
@@ -1165,10 +1168,16 @@ function update() {
   // Player input
   handlePlayerInput();
 
+  // Decrease spawn protection every frame
+  if (game.player && game.player.alive && game.player.spawnInvincible > 0) {
+    game.player.spawnInvincible--;
+  }
+
   // Enemy AI
   // Update all enemy cooldowns
   for (const e of game.enemiesOnScreen) {
     updateTankCooldown(e);
+    if (e.spawnInvincible > 0) e.spawnInvincible--;
   }
 
   // AI logic for each enemy (staggered)
